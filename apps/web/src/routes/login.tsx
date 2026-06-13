@@ -23,17 +23,13 @@ function LoginPage() {
       <div className="pointer-events-none absolute -top-32 left-1/2 h-96 w-2xl -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
 
       <div className="relative w-full max-w-md">
-        <div className="rounded-2xl border border-border bg-card p-8 shadow-lg shadow-foreground/5 sm:p-10">
-          <div className="mb-8 flex flex-col items-center text-center">
-            <img
-              src={logo}
-              alt="JustPassIt"
-              className="mb-5 h-14 w-auto"
-            />
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+        <div className="rounded-2xl border border-border bg-card p-7 shadow-lg shadow-foreground/5 sm:p-8">
+          <div className="mb-6 flex flex-col items-center text-center">
+            <img src={logo} alt="JustPassIt" className="mb-4 h-12 w-auto" />
+            <h1 className="text-xl font-semibold tracking-tight text-foreground">
               Welcome back
             </h1>
-            <p className="mt-1.5 text-sm text-muted-foreground">
+            <p className="mt-1 text-sm text-muted-foreground">
               Sign in to your JustPassIt account
             </p>
           </div>

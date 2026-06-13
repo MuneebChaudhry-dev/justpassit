@@ -38,7 +38,7 @@ export function LoginForm({ onSuccess }: { onSuccess?: () => void }) {
   });
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
+    <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="identifier">Username or email</Label>
         <Input
@@ -79,7 +79,11 @@ export function LoginForm({ onSuccess }: { onSuccess?: () => void }) {
         )}
       </div>
 
-      <Button type="submit" size="lg" disabled={submitting} className="mt-1 w-full">
+      <Button
+        type="submit"
+        disabled={submitting}
+        className="mt-2 h-auto w-full py-3 text-sm font-semibold"
+      >
         {submitting ? 'Signing in…' : 'Sign in'}
       </Button>
     </form>
