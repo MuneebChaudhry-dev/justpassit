@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { roleSchema } from '../enums';
+import { roleSchema } from '../enums.js';
 
 /**
  * Login request. A single `identifier` field is matched against `email`
