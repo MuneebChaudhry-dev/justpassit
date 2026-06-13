@@ -45,7 +45,7 @@ Workspaces live under `apps/*` and `packages/*`.
 - HTTP: Axios
 - Dates: date-fns
 - Toasts: Sonner
-- Icons: lucide-react
+- Icons: hugeicons-react
 - UI: shadcn/ui (Radix registry, **Mira** preset), Tailwind v4
 - Theme tokens live in `apps/web/src/index.css` (`:root` + `.dark`, OKLCH, cream/olive/orange).
 
@@ -334,7 +334,7 @@ Expected columns (the client's sheet):
   is fragile (trailing spaces, casing). If a client sheet stores the full answer text instead,
   match it back to the option to resolve the letter, and reject the row if it can't be resolved.
 - `Option C/D/E` and `Reason` may be empty.
-- Parse with SheetJS (`xlsx`) on the backend. Validate every row before inserting:
+- Parse with SheetJS (`xlsx`) OR `csv` on the backend. Validate every row before inserting:
   non-empty question, at least A and B present, a resolvable `correctAnswer`. Show the
   SuperAdmin a preview + per-row validation errors **before** committing. Set
   `Test.totalQuestions` to the inserted count.

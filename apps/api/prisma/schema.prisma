@@ -4,8 +4,12 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  // The NestJS app builds as CommonJS; emit a CJS-compatible client so the
+  // generated code compiles and runs under `nest build` / `node dist`.
+  moduleFormat = "cjs"
+  runtime      = "nodejs"
 }
 
 datasource db {

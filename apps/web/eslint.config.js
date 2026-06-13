@@ -19,4 +19,19 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    // TanStack Router code-based route files co-locate a Route object with the
+    // route's component (the idiomatic pattern); the app entry co-locates the
+    // bootstrap component; shadcn/ui components co-export their cva variants.
+    // Fast Refresh's "only export components" rule doesn't fit these.
+    files: [
+      'src/routes/**/*.tsx',
+      'src/router.tsx',
+      'src/main.tsx',
+      'src/components/ui/**/*.tsx',
+    ],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ])
