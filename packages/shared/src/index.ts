@@ -5,3 +5,5 @@
  */
 export * from './enums.js';
 export * from './schemas/auth.js';
+export * from './schemas/test.js';
+export * from './schemas/question.js';

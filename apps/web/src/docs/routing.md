@@ -6,12 +6,18 @@ so the tree is explicit and there's no build step.)
 
 ## Route tree
 ```
-__root            routes/__root.tsx     carries RouterContext { auth }
-├─ /              routes/index.tsx      redirects → /dashboard (authed) or /login
-├─ /login         routes/login.tsx      login page; redirects → /dashboard if already authed
-└─ _protected     routes/protected.tsx  pathless guard + ProtectedLayout
-   └─ /dashboard  routes/dashboard.tsx   role-aware landing (placeholder for now)
+__root              routes/__root.tsx       carries RouterContext { auth }
+├─ /                routes/index.tsx        redirects → /dashboard (authed) or /login
+├─ /login           routes/login.tsx        login page; redirects → /dashboard if already authed
+└─ _protected       routes/protected.tsx    pathless guard + ProtectedLayout
+   ├─ /dashboard    routes/dashboard.tsx    role-aware landing (placeholder)
+   ├─ /tests        routes/tests.tsx        SuperAdmin: test list + create dialog
+   └─ /tests/$testId routes/test-detail.tsx SuperAdmin: edit + questions + upload wizard
 ```
+
+`/tests` and `/tests/$testId` additionally guard on role in `beforeLoad` (redirect non-SuperAdmins
+to `/dashboard`). The `tests` feature lives in `src/features/tests/` (api + Query hooks + the
+create/upload dialogs).
 
 ## How the guard works
 - The router's `context.auth` (`{ user, isLoading }`) is injected by `RouterProvider` in
