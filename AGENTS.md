@@ -382,3 +382,6 @@ the matching doc in the same change.
 - Prefer small focused NestJS modules (one domain each) over fat controllers.
 - Keep formatting minimal and readable; the user is a frontend dev learning backend — favour
   clarity over cleverness, and add a short comment when a backend concept is non-obvious.
+
+## REMEMBER:
+YOUR code will be Analyzed by Codex,UI will be analyzed by gemeni and best practices will be analyzed by CodeRabbit. So Think before you code, always test when done.Its the real test of your capabilites. YOU can BEAT IT
