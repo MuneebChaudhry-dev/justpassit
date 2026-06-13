@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { PageHeader } from '@/components/layout/page-header';
 import { CreateTestDialog } from '@/features/tests/create-test-dialog';
 import { useTests } from '@/features/tests/hooks';
 import { protectedRoute } from './protected';
@@ -29,11 +30,12 @@ function TestsPage() {
   const { data: tests, isLoading, isError } = useTests();
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-foreground">Tests</h1>
-        <CreateTestDialog />
-      </div>
+    <div>
+      <PageHeader
+        title="Tests"
+        description="Create tests and upload their question sheets."
+        actions={<CreateTestDialog />}
+      />
 
       {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
       {isError && (
@@ -41,13 +43,16 @@ function TestsPage() {
       )}
 
       {tests && tests.length === 0 && (
-        <p className="text-sm text-muted-foreground">
-          No tests yet. Create your first one.
-        </p>
+        <div className="rounded-lg border border-dashed border-border bg-card/50 px-6 py-12 text-center">
+          <p className="text-sm font-medium text-foreground">No tests yet</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Create your first test to get started.
+          </p>
+        </div>
       )}
 
       {tests && tests.length > 0 && (
-        <div className="rounded-md ring-1 ring-foreground/10">
+        <div className="overflow-hidden rounded-lg ring-1 ring-foreground/10">
           <Table>
             <TableHeader>
               <TableRow>

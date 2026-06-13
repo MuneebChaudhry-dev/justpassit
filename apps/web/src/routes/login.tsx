@@ -1,5 +1,6 @@
 import { createRoute, redirect, useNavigate } from '@tanstack/react-router';
 import { LoginForm } from '@/features/auth/login-form';
+import logo from '@/assets/logo.png';
 import { Route as rootRoute } from './__root';
 
 export const loginRoute = createRoute({
@@ -17,15 +18,30 @@ export const loginRoute = createRoute({
 function LoginPage() {
   const navigate = useNavigate();
   return (
-    <div className="flex min-h-svh items-center justify-center bg-background p-4">
-      <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-sm">
-        <div className="mb-6 text-center">
-          <h1 className="text-xl font-semibold text-foreground">JustPassIt</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Sign in to continue
-          </p>
+    <div className="relative flex min-h-svh items-center justify-center overflow-hidden bg-background p-4">
+      {/* Soft brand glow behind the card */}
+      <div className="pointer-events-none absolute -top-32 left-1/2 h-96 w-2xl -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
+
+      <div className="relative w-full max-w-md">
+        <div className="rounded-2xl border border-border bg-card p-8 shadow-lg shadow-foreground/5 sm:p-10">
+          <div className="mb-8 flex flex-col items-center text-center">
+            <img
+              src={logo}
+              alt="JustPassIt"
+              className="mb-5 h-14 w-auto"
+            />
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              Welcome back
+            </h1>
+            <p className="mt-1.5 text-sm text-muted-foreground">
+              Sign in to your JustPassIt account
+            </p>
+          </div>
+          <LoginForm onSuccess={() => navigate({ to: '/dashboard' })} />
         </div>
-        <LoginForm onSuccess={() => navigate({ to: '/dashboard' })} />
+        <p className="mt-6 text-center text-xs text-muted-foreground">
+          Private platform · access by invitation only
+        </p>
       </div>
     </div>
   );

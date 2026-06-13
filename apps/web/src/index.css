@@ -152,4 +152,15 @@
   html {
     @apply font-sans;
   }
+
+  /* Interactive elements show the pointer cursor on hover (Tailwind v4 preflight
+     defaults buttons to the arrow cursor). Disabled controls keep the default. */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  a[href],
+  label[for],
+  summary,
+  select:not(:disabled) {
+    cursor: pointer;
+  }
 }
