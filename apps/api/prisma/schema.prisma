@@ -10,4 +10,221 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── USER ──────────────────────────────────────────────
+// One table for all three roles, separated by `role`.
+// Admins/SuperAdmins log in with email; end users with username.
+// `isActive` is checked live in guards → block takes effect immediately.
+// `createdBy` traces who made this account (SuperAdmin made Admin, Admin made User).
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String?  @unique   // admins & superadmins
+  username  String?  @unique   // end users (auto-generated)
+  password  String              // bcrypt hash, never plaintext
+  role      Role
+  isActive  Boolean  @default(true)
+  createdBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdTests     Test[]            @relation("TestCreator")
+  adminAssignments AdminAssignment[] @relation("AdminUser")
+  candidateAccess  CandidateAccess[] @relation("CandidateUser")
+  auditLogs        AuditLog[]
+
+  @@index([role])
+  @@index([createdBy])
+}
+
+// ── TEST ──────────────────────────────────────────────
+// `isActive` lets SuperAdmin deactivate a test without deleting it.
+// `isLocked` flips to true the moment the first attempt is made →
+// service layer refuses any question edit/re-upload after that.
+// No duration field — there is no in-test timer by design.
+model Test {
+  id             String   @id @default(uuid())
+  name           String
+  description    String?
+  passingPct     Int      @default(70)
+  totalQuestions Int      @default(0)
+  isActive       Boolean  @default(true)
+  isLocked       Boolean  @default(false)
+  createdBy      String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  creator          User              @relation("TestCreator", fields: [createdBy], references: [id])
+  questions        Question[]
+  adminAssignments AdminAssignment[]
+  candidateAccess  CandidateAccess[]
+  attempts         TestAttempt[]
+
+  @@index([createdBy])
+  @@index([isActive])
+}
+
+// ── QUESTION ──────────────────────────────────────────
+// Single normalized table — NEVER one-table-per-test.
+// C/D/E optional (some questions are true/false → only A/B).
+// `correctAnswer` stores the letter: "A".."E".
+// `orderNum` preserves the Excel Index order.
+// No per-answer snapshot needed: tests freeze on first attempt,
+// so questions can't change under a historical result.
+model Question {
+  id            String   @id @default(uuid())
+  testId        String
+  questionText  String
+  optionA       String
+  optionB       String
+  optionC       String?
+  optionD       String?
+  optionE       String?
+  correctAnswer String
+  reason        String?
+  orderNum      Int
+  createdAt     DateTime @default(now())
+
+  test    Test            @relation(fields: [testId], references: [id], onDelete: Cascade)
+  answers AttemptAnswer[]
+
+  @@index([testId])
+  @@unique([testId, orderNum])
+}
+
+// ── ADMIN ASSIGNMENT ──────────────────────────────────
+// Which Admin can sell/see which Test. SuperAdmin controls this.
+// `canEditPassingPct` = the per-assignment permission your spec mentions.
+// Unique pair prevents assigning the same test to the same admin twice.
+model AdminAssignment {
+  id                String   @id @default(uuid())
+  adminId           String
+  testId            String
+  assignedBy        String
+  canEditPassingPct Boolean  @default(false)
+  createdAt         DateTime @default(now())
+
+  admin User @relation("AdminUser", fields: [adminId], references: [id], onDelete: Cascade)
+  test  Test @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  @@unique([adminId, testId])
+  @@index([adminId])
+  @@index([testId])
+}
+
+// ── CANDIDATE ACCESS ──────────────────────────────────
+// The thing the Admin actually sells: "this user can practice this test
+// until expiresAt". This is the ONLY time concept in the system.
+// `isRevoked` + `expiresAt` are both checked live in guards →
+// revoke/expiry takes effect immediately.
+// `adminId` = who granted it (for scoping: an admin sees only their own).
+model CandidateAccess {
+  id          String    @id @default(uuid())
+  candidateId String
+  testId      String
+  adminId     String
+  expiresAt   DateTime
+  isRevoked   Boolean   @default(false)
+  revokedBy   String?
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  candidate User          @relation("CandidateUser", fields: [candidateId], references: [id], onDelete: Cascade)
+  test      Test          @relation(fields: [testId], references: [id], onDelete: Cascade)
+  attempts  TestAttempt[]
+
+  @@unique([candidateId, testId])
+  @@index([candidateId])
+  @@index([adminId])
+  @@index([testId])
+}
+
+// ── TEST ATTEMPT ──────────────────────────────────────
+// One row per attempt. `mode` separates a real FULL run from a
+// PRACTICE run (wrong-questions-only). PRACTICE is excluded from
+// best/worst/pass stats. `status` drives resume: an IN_PROGRESS
+// attempt is the one the user continues.
+// Score/isPassed null until completed.
+model TestAttempt {
+  id          String        @id @default(uuid())
+  accessId    String
+  testId      String
+  candidateId String
+  attemptNum  Int           @default(1)
+  mode        AttemptMode   @default(FULL)
+  status      AttemptStatus @default(IN_PROGRESS)
+  score       Float?
+  totalQuestions Int        @default(0)
+  correctCount   Int        @default(0)
+  isPassed    Boolean?
+  startedAt   DateTime      @default(now())
+  completedAt DateTime?
+
+  access  CandidateAccess @relation(fields: [accessId], references: [id], onDelete: Cascade)
+  test    Test            @relation(fields: [testId], references: [id], onDelete: Cascade)
+  answers AttemptAnswer[]
+
+  @@index([accessId])
+  @@index([candidateId])
+  @@index([testId])
+  @@index([status])
+}
+
+// ── ATTEMPT ANSWER ────────────────────────────────────
+// One row per answered question per attempt.
+// Unique([attemptId, questionId]) + upsert on save → auto-save can fire
+// twice for the same question without creating duplicates or skewing score.
+// `isCorrect` computed server-side at save time (never trust the client).
+model AttemptAnswer {
+  id         String   @id @default(uuid())
+  attemptId  String
+  questionId String
+  selected   String           // the letter the user picked: "A".."E"
+  isCorrect  Boolean
+  answeredAt DateTime @default(now())
+
+  attempt  TestAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question Question    @relation(fields: [questionId], references: [id])
+
+  @@unique([attemptId, questionId])
+  @@index([attemptId])
+  @@index([questionId])
+}
+
+// ── AUDIT LOG ─────────────────────────────────────────
+// Required by spec. Append-only. Records every important admin action.
+// `actorId` = who did it. `action` = a stable string constant.
+// `metadata` = freeform JSON (e.g. old/new passing %, days granted).
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String
+  action     String   // "TEST_UPLOADED" | "ACCESS_GRANTED" | "ACCESS_REVOKED" | "USER_BLOCKED" | "ADMIN_CREATED" | ...
+  entityType String   // "Test" | "User" | "CandidateAccess" | "AdminAssignment"
+  entityId   String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  actor User @relation(fields: [actorId], references: [id])
+
+  @@index([actorId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+enum Role {
+  SUPERADMIN
+  ADMIN
+  ENDUSER
+}
+
+enum AttemptMode {
+  FULL
+  PRACTICE
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  COMPLETED
 }
